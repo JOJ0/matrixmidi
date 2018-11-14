@@ -1,5 +1,6 @@
 #include <MIDI.h>
 #include <advancedSerial.h>
+#include <Button.h>
 #define USBserial Serial
 #define VERBOSITY Level::vvv
 
@@ -71,8 +72,9 @@ void loop()
                 aSerial.vvv().pln();
                 if (mode != 2)
                 {
-                    MIDI.sendControlChange(buttons[row][col], 65, midi_ch);
                     delay(5);
+                    MIDI.sendControlChange(buttons[row][col], 65, midi_ch);
+                    delay(250);
                 }
             }
         }
