@@ -10,11 +10,11 @@ const uint8_t ledPin = 13;      // LED pin on most Arduino
 
 const uint8_t outPins[] = {6,7,8}; // the rows
 const uint8_t inPins[] = {9,10,11,12}; // the columns
-const uint8_t buttons[][3] = {
-    {'1','2','3'},
-    {'4','5','6'},
-    {'7','8','9'},
-    {'*','0','#'},
+uint8_t buttons[4][3] = {
+    {101,102,103},
+    {104,105,106},
+    {107,108,109},
+    {110,111,112},
 };
 
 void setup()
@@ -34,25 +34,27 @@ void setup()
     aSerial.setPrinter(USBserial);
     aSerial.setFilter(VERBOSITY);
     aSerial.DEBUGGING;  // enable/disable debug output in #define section
+    while(!USBserial); // wait until USBserial is accessible
+    aSerial.v().pln("Matrix MIDI Ctrl ready...");
 }
 
 void loop()
 {
-    for (int col = 0; col < sizeof(outPins); col++)
+    for (uint8_t col = 0; col < sizeof(outPins); col++)
     {
         digitalWrite(outPins[col], HIGH);
-        for (int row = 0; row < sizeof(inPins); row++)
+        for (uint8_t row = 0; row < sizeof(inPins); row++)
         {
             if (digitalRead(inPins[row]) == HIGH) // blink led if inPin is HIGH)
             {
                 digitalWrite(ledPin, HIGH);
                 aSerial.vvv().p("yes, it's high: ").p(col).p(" ").pln(row);
+                aSerial.vvv().p("button CC: ").pln(buttons[row][col]);
                 aSerial.vvv().pln();
             }
         }
         digitalWrite(outPins[col], LOW);
-        aSerial.vvv().pln();
     }
-    delay(500); // enable for slower debugging, otherwise lit led can't be seen ;-)
+    //delay(500); // enable for slower debugging
     digitalWrite(ledPin, LOW);
 }
