@@ -2,9 +2,12 @@
 #include <advancedSerial.h>
 #define USBserial Serial
 #define VERBOSITY Level::vvv
-#define DEBUGGING on()
-//#define DEBUGGING off()
 
+// mode 0 -> native MIDI bitrate
+// mode 1 -> serial bitrate, MIDI over hairless bridge
+// mode 2 -> serial bitrate, debugging via serial monitor
+const uint8_t mode = 1;
+const uint8_t midi_ch = 1;
 
 const uint8_t ledPin = 13;      // LED pin on most Arduino
 
@@ -16,6 +19,8 @@ uint8_t buttons[4][3] = {
     {107,108,109},
     {110,111,112},
 };
+
+MIDI_CREATE_INSTANCE(HardwareSerial, USBserial, MIDI); // with this method port is selectable here
 
 void setup()
 {
@@ -30,12 +35,25 @@ void setup()
     digitalWrite(outPins[0], LOW); // initialize cols with LOW
     digitalWrite(outPins[1], LOW);
     digitalWrite(outPins[2], LOW);
-    USBserial.begin(115200); // debugging settings start here
-    aSerial.setPrinter(USBserial);
-    aSerial.setFilter(VERBOSITY);
-    aSerial.DEBUGGING;  // enable/disable debug output in #define section
     while(!USBserial); // wait until USBserial is accessible
-    aSerial.v().pln("Matrix MIDI Ctrl ready...");
+    if (mode == 0)
+    {
+        USBserial.begin(31250); // MIDI serial rate -> cheap USB MIDI cable hack
+        aSerial.off();  // disable debug output
+    }
+    else if (mode == 1)
+    {
+        USBserial.begin(9600); // common serial rate -> hairless midi bridge
+        aSerial.off();  // disable debug output
+    }
+    else if (mode == 2)
+    {
+        USBserial.begin(9600);  // common serial rate -> debugging
+        aSerial.setPrinter(USBserial);  // debugging settings
+        aSerial.setFilter(VERBOSITY); // debugging settings
+        aSerial.v().pln("Matrix MIDI Ctrl ready...");
+        aSerial.on();  // enable debug output
+    }
 }
 
 void loop()
@@ -51,6 +69,11 @@ void loop()
                 aSerial.vvv().p("yes, it's high: ").p(col).p(" ").pln(row);
                 aSerial.vvv().p("button CC: ").pln(buttons[row][col]);
                 aSerial.vvv().pln();
+                if (mode != 2)
+                {
+                    MIDI.sendControlChange(buttons[row][col], 65, midi_ch);
+                    delay(5);
+                }
             }
         }
         digitalWrite(outPins[col], LOW);
