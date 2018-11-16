@@ -57,6 +57,36 @@ void setup()
     }
 }
 
+// saves the buttons current state. 1=pressed, 0=released
+uint8_t buttonsPressedNow[4][3] = {
+    {0,0,0},
+    {0,0,0},
+    {0,0,0},
+    {0,0,0}
+};
+
+// button state is backuped up to this array after each cycle where a button press was detected,
+// so we can compare if the state of the button has changed on the next cycle
+uint8_t buttonsPressedLast[4][3] = {
+    {0,0,0},
+    {0,0,0},
+    {0,0,0},
+    {0,0,0}
+};
+
+void sendCCandLog(uint8_t cc_num, uint8_t cc_value, uint8_t _midi_ch, uint8_t _mode)
+{
+    digitalWrite(ledPin, HIGH);
+    aSerial.vvv().p("button CC: ").pln(cc_num);
+    aSerial.vvv().pln();
+    if (mode != 2)
+    {
+        delay(5);
+        MIDI.sendControlChange(cc_num, cc_value, _midi_ch);
+        delay(250);
+    }
+}
+
 void loop()
 {
     for (uint8_t col = 0; col < sizeof(outPins); col++)
@@ -64,19 +94,29 @@ void loop()
         digitalWrite(outPins[col], HIGH);
         for (uint8_t row = 0; row < sizeof(inPins); row++)
         {
-            if (digitalRead(inPins[row]) == HIGH) // blink led if inPin is HIGH)
+            // MOMENTARY PRESS BEHAVIOUR:
+            // first check what state the button is in
+            if (digitalRead(inPins[row]) == HIGH)
             {
-                digitalWrite(ledPin, HIGH);
-                aSerial.vvv().p("yes, it's high: ").p(col).p(" ").pln(row);
-                aSerial.vvv().p("button CC: ").pln(buttons[row][col]);
-                aSerial.vvv().pln();
-                if (mode != 2)
-                {
-                    delay(5);
-                    MIDI.sendControlChange(buttons[row][col], 65, midi_ch);
-                    delay(250);
-                }
+                buttonsPressedNow[row][col] = 1;
             }
+            else
+            {
+                buttonsPressedNow[row][col] = 0;
+            }
+            // then check if it was just pressed or just released
+            // no else: nothing to do when state didn't change
+            if (buttonsPressedNow[row][col] > buttonsPressedLast[row][col])
+            {
+                sendCCandLog(buttons[row][col], 65, midi_ch, mode); // just pressed
+                                                                   // -> send sth higher than 64
+            }
+            else if (buttonsPressedNow[row][col] < buttonsPressedLast[row][col])
+            {
+                sendCCandLog(buttons[row][col], 0, midi_ch, mode); // just released -> send 0
+            }
+            // save current button state in ...Last array so we can compare against it on next run
+            buttonsPressedLast[row][col] = buttonsPressedNow[row][col];
         }
         digitalWrite(outPins[col], LOW);
     }
