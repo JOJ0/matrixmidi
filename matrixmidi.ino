@@ -81,9 +81,9 @@ void sendCCandLog(uint8_t cc_num, uint8_t cc_value, uint8_t _midi_ch, uint8_t _m
     aSerial.vvv().pln();
     if (mode != 2)
     {
-        delay(5);
+        delay(1);
         MIDI.sendControlChange(cc_num, cc_value, _midi_ch);
-        delay(250);
+        delay(5);
     }
 }
 
