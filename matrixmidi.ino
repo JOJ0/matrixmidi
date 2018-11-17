@@ -20,6 +20,7 @@ uint8_t buttons[4][3] = {
     {107,108,109},
     {110,111,112},
 };
+uint8_t ledPins[] = {1,2,3,4,5};
 
 MIDI_CREATE_INSTANCE(HardwareSerial, USBserial, MIDI); // with this method port is selectable here
 
@@ -36,6 +37,10 @@ void setup()
     digitalWrite(outPins[0], HIGH); // initialize cols with HIGH, matrix should work low-active
     digitalWrite(outPins[1], HIGH);
     digitalWrite(outPins[2], HIGH);
+    for (uint8_t ledset = 1; ledset <= sizeof(ledPins); ledset++)
+    {
+        pinMode(ledPins[ledset], OUTPUT);
+    }
     while(!USBserial); // wait until USBserial is accessible
     if (mode == 0)
     {
@@ -77,6 +82,10 @@ uint8_t buttonsPressedLast[4][3] = {
 void sendCCandLog(uint8_t cc_num, uint8_t cc_value, uint8_t _midi_ch, uint8_t _mode)
 {
     digitalWrite(ledPin, HIGH);
+    for (uint8_t led = 1; led <= sizeof(ledPins); led++)
+    {
+        digitalWrite(ledPins[led], HIGH);
+    }
     aSerial.vvv().p("button CC: ").pln(cc_num);
     aSerial.vvv().pln();
     if (mode != 2)
@@ -122,4 +131,8 @@ void loop()
     }
     //delay(500); // enable for slower debugging
     digitalWrite(ledPin, LOW);
+    for (uint8_t ledoff = 1; ledoff <= sizeof(ledPins); ledoff++)
+    {
+        digitalWrite(ledPins[ledoff], LOW);
+    }
 }
