@@ -7,7 +7,7 @@
 // mode 0 -> native MIDI bitrate
 // mode 1 -> serial bitrate, MIDI over hairless bridge
 // mode 2 -> serial bitrate, debugging via serial monitor
-const uint8_t mode = 1;
+const uint8_t mode = 0;
 const uint8_t midi_ch = 1;
 
 const uint8_t ledPin = 13;      // LED pin on most Arduino
@@ -29,13 +29,13 @@ void setup()
     pinMode(outPins[0], OUTPUT); // our output line for col 0 (1,4,7,*)
     pinMode(outPins[1], OUTPUT); // col 1 (2,5,8,0)
     pinMode(outPins[2], OUTPUT); // col 2 (3,6,9,#)
-    pinMode(inPins[0], INPUT); // just for clarity, INPUT is the default mode anyway
-    pinMode(inPins[1], INPUT);
-    pinMode(inPins[2], INPUT);
-    pinMode(inPins[3], INPUT);
-    digitalWrite(outPins[0], LOW); // initialize cols with LOW
-    digitalWrite(outPins[1], LOW);
-    digitalWrite(outPins[2], LOW);
+    pinMode(inPins[0], INPUT_PULLUP); // INPUT_PULLUP saves us some 10k Rs
+    pinMode(inPins[1], INPUT_PULLUP);
+    pinMode(inPins[2], INPUT_PULLUP);
+    pinMode(inPins[3], INPUT_PULLUP);
+    digitalWrite(outPins[0], HIGH); // initialize cols with HIGH, matrix should work low-active
+    digitalWrite(outPins[1], HIGH);
+    digitalWrite(outPins[2], HIGH);
     while(!USBserial); // wait until USBserial is accessible
     if (mode == 0)
     {
@@ -91,12 +91,12 @@ void loop()
 {
     for (uint8_t col = 0; col < sizeof(outPins); col++)
     {
-        digitalWrite(outPins[col], HIGH);
+        digitalWrite(outPins[col], LOW);
         for (uint8_t row = 0; row < sizeof(inPins); row++)
         {
             // MOMENTARY PRESS BEHAVIOUR:
             // first check what state the button is in
-            if (digitalRead(inPins[row]) == HIGH)
+            if (digitalRead(inPins[row]) == LOW) // now LOWs are what we are looking for
             {
                 buttonsPressedNow[row][col] = 1;
             }
@@ -118,7 +118,7 @@ void loop()
             // save current button state in ...Last array so we can compare against it on next run
             buttonsPressedLast[row][col] = buttonsPressedNow[row][col];
         }
-        digitalWrite(outPins[col], LOW);
+        digitalWrite(outPins[col], HIGH);
     }
     //delay(500); // enable for slower debugging
     digitalWrite(ledPin, LOW);
