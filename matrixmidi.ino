@@ -1,6 +1,5 @@
 #include <MIDI.h>
 #include <advancedSerial.h>
-#include <Button.h>
 #define USBserial Serial
 #define VERBOSITY Level::vvv
 
