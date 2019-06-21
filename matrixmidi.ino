@@ -87,7 +87,7 @@ void sendCCandLog(uint8_t cc_num, uint8_t cc_value, uint8_t _midi_ch, uint8_t _m
     }
     aSerial.vvv().p("button CC: ").pln(cc_num);
     aSerial.vvv().pln();
-    if (mode != 2)
+    if (_mode != 2)
     {
         delay(1);
         MIDI.sendControlChange(cc_num, cc_value, _midi_ch);
